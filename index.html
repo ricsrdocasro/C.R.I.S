@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.R.I.S. /// TERMINAL_ACCESS</title>
+    <link id="favicon" rel="icon" href="Logo_Ordo_Realitas_Verde.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- VARIÁVEIS GERAIS --- */
+        :root {
+            --bg-color: #050505;
+            --term-green: #00ff41; /* Verde Matrix (Padrão) */
+            --term-dim: #008F11;
+            --glass: rgba(0, 20, 0, 0.9);
+            
+            /* Cores dos Elementos */
+            --sangue: #ff0000;
+            --morte: #a0a0a0;
+            --conhecimento: #ffcc00;
+            --energia: #bf00ff;
+            --medo: #ffffff; /* Branco/Transparente */
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Fira Code', monospace;
+            margin: 0; padding: 0;
+            color: var(--term-green);
+            height: 100vh;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            text-shadow: 0 0 4px var(--term-dim);
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        /* --- OVERLAY DE INICIALIZAÇÃO --- */
+        #init-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer;
+        }
+        #init-btn {
+            border: 2px solid var(--term-green); color: var(--term-green);
+            padding: 20px 40px; font-family: 'Share Tech Mono'; font-size: 1.5rem;
+            background: transparent; text-transform: uppercase; letter-spacing: 3px;
+            animation: pulse-btn 2s infinite;
+        }
+        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 65, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); } }
+
+        /* --- SCANLINES --- */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            z-index: 9000; pointer-events: none; opacity: 0.6;
+        }
+
+        /* --- TELA DE BOOT --- */
+        #boot-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 5000;
+            display: none; 
+            align-items: flex-start; justify-content: flex-start;
+            padding: 40px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .cursor-blink::after { content: '█'; animation: blink 1s infinite; margin-left: 5px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        header {
+            border-bottom: 1px solid var(--term-dim);
+            padding: 10px 20px; background: #001100;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        main {
+            flex: 1; display: flex; padding: 20px; gap: 20px;
+            max-width: 1400px; margin: 0 auto; width: 100%; height: 100%; overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 280px; display: flex; flex-direction: column; flex-shrink: 0;
+            border: 1px solid var(--term-dim);
+            background: rgba(0, 20, 0, 0.2);
+            transition: border-color 0.5s;
+        }
+
+        .logo-area {
+            padding: 30px; 
+            border-bottom: 1px solid var(--term-dim);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .cris-logo img {
+            width: 120px; height: auto;
+            filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(0 0 5px var(--term-green));
+            opacity: 0.9; transition: all 0.5s;
+        }
+        .cris-logo img:hover {
+            filter: grayscale(100%) brightness(1.2) sepia(100%) hue-rotate(50deg) saturate(1000%) drop-shadow(0 0 15px var(--term-green));
+            transform: scale(1.05);
+        }
+
+        .sys-version { margin-top: 10px; font-size: 0.7rem; letter-spacing: 2px; opacity: 0.7; }
+        .sidebar-header { background: var(--term-dim); color: black; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; transition: background 0.5s; }
+
+        .history-list {
+            flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px;
+            scrollbar-width: thin; scrollbar-color: var(--term-dim) black;
+        }
+
+        .history-item {
+            padding: 10px; border: 1px solid transparent; cursor: pointer;
+            font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;
+            color: rgba(0, 255, 65, 0.7); transition: 0.2s;
+        }
+        .history-item:hover { border-color: var(--term-green); background: rgba(0, 255, 0, 0.1); }
+        .history-item.active { background: var(--term-green); color: black; font-weight: bold; }
+
+        .delete-btn { font-family: sans-serif; font-weight: bold; padding: 0 5px; opacity: 0.5; }
+        .delete-btn:hover { opacity: 1; color: #000; }
+
+        .new-chat-btn {
+            border-top: 1px solid var(--term-dim); padding: 15px;
+            text-align: center; cursor: pointer; font-weight: bold; letter-spacing: 1px;
+            transition: 0.3s;
+        }
+        .new-chat-btn:hover { background: var(--term-green); color: black; }
+
+        /* --- CHAT AREA --- */
+        .chat-interface {
+            flex: 1; border: 1px solid var(--term-dim);
+            display: flex; flex-direction: column; position: relative;
+            background: rgba(0, 10, 0, 0.4);
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9);
+            transition: border-color 0.5s;
+        }
+
+        .messages-area {
+            flex: 1; padding: 30px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 20px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .message {
+            max-width: 90%; line-height: 1.5; font-size: 1rem; 
+            padding-left: 15px; border-left: 2px solid transparent;
+            word-wrap: break-word;
+        }
+        
+        .message.user { align-self: flex-start; color: #aaa; border-left-color: #555; }
+        .message.user::before { content: "> AGENTE: "; color: white; font-weight: bold; }
+        
+        .message.bot { align-self: flex-start; color: var(--term-green); border-left-color: var(--term-green); }
+        .message.bot::before { content: "[C.R.I.S]: "; font-weight: bold; }
+
+        .message b { color: white; text-shadow: 0 0 5px white; }
+        .message i { color: inherit; font-style: italic; opacity: 0.8; }
+
+        /* --- INPUT --- */
+        .input-area {
+            border-top: 1px solid var(--term-dim); padding: 15px;
+            display: flex; gap: 10px; background: #000;
+        }
+        .prompt-symbol { padding: 10px 0 10px 5px; font-weight: bold; font-size: 1.2rem; }
+
+        input {
+            flex: 1; background: transparent; border: none;
+            color: var(--term-green); font-family: 'Fira Code', monospace; font-size: 1rem;
+            outline: none;
+        }
+        input::placeholder { color: rgba(0, 255, 65, 0.3); }
+
+        button#send-btn {
+            background: transparent; border: 1px solid var(--term-green);
+            color: var(--term-green); padding: 0 30px; cursor: pointer;
+            font-family: 'Share Tech Mono'; font-weight: bold; transition: all 0.2s;
+        }
+        button#send-btn:hover { background: var(--term-green); color: black; box-shadow: 0 0 10px var(--term-green); }
+        button#send-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; box-shadow: none; }
+
+	    /* --- NOVO EFEITO GLITCH (CONTIDO E ANALÓGICO) --- */
+        @keyframes glitch-contained {
+            0% {
+                clip-path: inset(0 0 0 0);
+                transform: translate(0);
+                /* Filtro normal verde */
+                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%);
+            }
+            2% {
+                clip-path: inset(10% 0 85% 0);
+                transform: translate(-5px, 0);
+                /* Filtro com leve desvio de cor ciano */
+                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(5px 0 0 rgba(0, 255, 255, 0.5));
+            }
+            4% {
+                clip-path: inset(60% 0 30% 0);
+                transform: translate(8px, 0);
+                /* Filtro com leve desvio de cor vermelho */
+                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(-5px 0 0 rgba(255, 0, 0, 0.5));
+            }
+            6% {
+                clip-path: inset(20% 0 60% 0);
+                transform: translate(-3px, 0);
+            }
+            8% {
+                clip-path: inset(0 0 0 0);
+                transform: translate(0);
+                /* Retorna ao normal */
+                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%);
+            }
+            /* Pausa longa sem efeito */
+            100% {
+                clip-path: inset(0 0 0 0);
+                transform: translate(0);
+            }
+        }
+
+        .glitch-active img {
+            /* Animação rápida que se repete a cada 3 segundos */
+            animation: glitch-contained 3s infinite;
+            /* Garante que o efeito não vaze do container */
+            will-change: clip-path, transform, filter;
+        }
+
+        /* Desativa o tremor do container para um efeito mais contido */
+        .glitch-active {
+            animation: none;
+        }
+
+        /* Animação de Desligar CRT */
+        @keyframes turn-off {
+            0% { transform: scale(1, 1.3) translate3d(0, 0, 0); filter: brightness(1); opacity: 1; }
+            60% { transform: scale(1, 0.001) translate3d(0, 0, 0); filter: brightness(10); }
+            100% { animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06); transform: scale(0, 0.001) translate3d(0, 0, 0); filter: brightness(0); opacity: 0; }
+        }
+        .shutdown-mode {
+            animation: turn-off 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+            animation-fill-mode: forwards;
+        }
+
+        /* --- ESTILO PARA ARTE ASCII (RITUAIS) --- */
+        .ascii-art {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            white-space: pre; /* Mantém espaços exatos */
+            font-size: 8px;   /* Tamanho base pequeno para caber arte grande */
+            line-height: 8px; /* Altura da linha coladinha pra não esticar o desenho */
+            color: var(--term-dim);
+            margin: 10px 0;
+            overflow-x: auto; /* Permite rolar pro lado se não couber */
+            width: 100%;
+            display: block;
+            text-align: center; /* Centraliza o bloco */
+        }
+
+        /* No celular, diminui ainda mais */
+        @media (max-width: 600px) {
+            .ascii-art {
+                font-size: 4px; /* Minúsculo para tentar caber no celular */
+                line-height: 4px;
+            }
+        }
+
+        /* MOBILE */
+        @media (max-width: 800px) {
+            main { flex-direction: column; padding: 10px; }
+            .sidebar { width: 100%; height: auto; flex-direction: row; align-items: center; padding: 5px;}
+            .logo-area { padding: 5px; border: none; flex-direction: row; gap: 10px;}
+            .cris-logo img { width: 50px; }
+            .sys-version { display: none; }
+            .sidebar-header, .history-list { display: none; }
+            .new-chat-btn { flex: 1; border: none; border-left: 1px solid var(--term-dim); padding: 10px; font-size: 0.8rem;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <div id="init-overlay">
+        <div id="init-btn">INICIALIZAR SISTEMA</div>
+        <div style="margin-top: 20px; color: #00ff41; font-family: 'Fira Code'; font-size: 0.8rem;">/// TOQUE PARA CONECTAR ///</div>
+    </div>
+
+    <div id="boot-screen">
+        <div id="boot-text" class="cursor-blink"></div>
+    </div>
+
+    <header>
+        <div>/// ORDO_REALITAS_SECURE_NET ///</div>
+        <div id="clock">00:00:00</div>
+    </header>
+
+    <main id="main-interface" style="display:none;">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="cris-logo">
+                    <img src="Logo_Ordo_Realitas.webp" alt="Ordo Realitas">
+                </div>
+                <div class="sys-version">SYS. V.2.0.4</div>
+            </div>
+
+            <div class="sidebar-header">/// ARQUIVOS ///</div>
+            <div class="history-list" id="history-list-dom"></div>
+            <div class="new-chat-btn" onclick="startNewSession()">[+] NOVO PROTOCOLO</div>
+        </aside>
+
+        <section class="chat-interface">
+            <div class="messages-area" id="messages"></div>
+            <div class="input-area">
+                <span class="prompt-symbol">></span>
+                <input type="text" id="user-input" placeholder="Aguardando input..." autocomplete="off">
+                <button id="send-btn">ENVIAR</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // =================================================================
+        // CONFIGURAÇÃO
+        // =================================================================
+        const API_URL = "https://ricsrdocasro-c-r-i-s-backend.hf.space/chat"; 
+        
+        // SOM DE INICIALIZAÇÃO
+        const startupAudio = new Audio('startup.mp3');
+        startupAudio.volume = 0.5;
+
+        // Função para cessar o som gradualmente
+        function stopStartupSound() {
+            const fadeAudio = setInterval(() => {
+                if (startupAudio.volume > 0.05) {
+                    startupAudio.volume -= 0.05;
+                } else {
+                    clearInterval(fadeAudio);
+                    startupAudio.pause();
+                    startupAudio.currentTime = 0; 
+                }
+            }, 200);
+        }
+
+        // =================================================================
+        // LÓGICA DA MEMBRANA (CENTRALIZADA)
+        // =================================================================
+        function calculateMembrane() {
+            const now = new Date();
+            const hour = now.getHours();
+            const minutes = now.getMinutes();
+            const day = now.getDay(); 
+            const date = now.getDate(); 
+
+            // Fatores de Realidade
+            const isWitchingHour = (hour === 3); // 03:00 AM
+            const isNight = (hour >= 18 || hour < 6);
+            const isFriday13 = (day === 5 && date === 13);
+            
+            let baseChance = Math.random(); 
+            let logExtra = "Níveis de entropia padrão.";
+
+            // Modificadores
+            if (isFriday13) {
+                baseChance += 0.5; 
+                logExtra = "ALERTA: DATA DE CONVERGÊNCIA OCULTA (SEXTA-13).";
+            } else if (isWitchingHour) {
+                baseChance += 0.4; 
+                logExtra = `HORA MORTA DETECTADA [03:${minutes < 10 ? '0'+minutes : minutes}]. BARREIRA NO LIMITE.`;
+            } else if (isNight) {
+                baseChance += 0.15; 
+                logExtra = "Ausência de luz solar favorece o afinamento.";
+            }
+
+            // Definição dos Estados
+            if (baseChance > 0.85) {
+                return { status: "ROMPIDA", cor: "#ff0000", msg: "PERIGO IMEDIATO. ENTIDADES MANIFESTANDO.", log: logExtra, danger: true };
+            } else if (baseChance > 0.6) {
+                return { status: "DANIFICADA", cor: "#ffaa00", msg: "Afinamento crítico. Prepare rituais.", log: logExtra, danger: false };
+            } else if (baseChance > 0.3) {
+                return { status: "ENFRAQUECIDA", cor: "#ffff00", msg: "Oscilações detectadas.", log: logExtra, danger: false };
+            } else {
+                return { status: "ESTÁVEL", cor: "#00ff41", msg: "Nenhuma perturbação local.", log: logExtra, danger: false };
+            }
+        }
+
+        // =================================================================
+        // EFEITOS DE ELEMENTOS E CORES
+        // =================================================================
+        function checkContextAndChangeColor(text) {
+            const t = text.toLowerCase();
+            const root = document.documentElement;
+            const logoDiv = document.querySelector('.cris-logo');
+            
+            let color = '#00ff41'; // Padrão
+            let dimColor = '#008F11';
+            let isGlitchy = false;
+
+            // --- LORE ---
+            if (t.includes('medo') || t.includes('infinito') || t.includes('desconhecido') || 
+                t.includes('enigma') || t.includes('degolificada') || t.includes('névoa') || 
+                t.includes('cinerária') || t.includes('impossível') || t.includes('deus') || t.includes('kian')) {
+                color = '#ffffff'; dimColor = '#cccccc'; isGlitchy = true;
+            } 
+            else if (t.includes('sangue') || t.includes('ódio') || t.includes('dor') || t.includes('sentimento') || t.includes('diabo')) {
+                color = '#ff3333'; dimColor = '#800000';
+            } else if (t.includes('morte') || t.includes('lodo') || t.includes('espiral') || t.includes('tempo')) {
+                color = '#a0a0a0'; dimColor = '#404040'; isGlitchy = true;
+            } else if (t.includes('conhecimento') || t.includes('saber') || t.includes('verdade') || t.includes('sigilo') || t.includes('magistrada')) {
+                color = '#ffd700'; dimColor = '#b8860b';
+            } else if (t.includes('energia') || t.includes('caos') || t.includes('transformação') || t.includes('anfitrião')) {
+                color = '#bd00ff'; dimColor = '#4b0082'; isGlitchy = true;
+            }
+
+            root.style.setProperty('--term-green', color);
+            root.style.setProperty('--term-dim', dimColor);
+
+            if (logoDiv) {
+                if (isGlitchy) logoDiv.classList.add('glitch-active');
+                else logoDiv.classList.remove('glitch-active');
+            }
+        }
+
+        // =================================================================
+        // BOOT SEQUENCE (COM LÓGICA DA MEMBRANA)
+        // =================================================================
+        const bootTextDiv = document.getElementById('boot-text');
+        const mainInterface = document.getElementById('main-interface');
+        const bootScreen = document.getElementById('boot-screen');
+        const initOverlay = document.getElementById('init-overlay');
+
+        // Estado inicial da membrana (calculado no load)
+        const initialMembraneState = calculateMembrane();
+
+        // Gera as linhas de boot dinamicamente
+        const bootLines = [
+            "INICIANDO SISTEMA...",
+            "CARREGANDO KERNEL...",
+            "ACESSANDO SENSORES DE REALIDADE...",
+            `VERIFICANDO MEMBRANA... ${initialMembraneState.status}.`, // <--- AQUI A MÁGICA
+            "DETECTANDO SINAIS DE RITUAIS...",
+            "CONECTANDO AO SERVIDOR C.R.I.S...",
+            "> USUÁRIO: AGENTE_EXTERNO",
+            "> SENHA: ***********",
+            "ACESSO AUTORIZADO.",
+            "BEM-VINDO À ORDEM."
+        ];
+
+        initOverlay.addEventListener('click', () => {
+            initOverlay.style.display = 'none';
+            bootScreen.style.display = 'flex';
+            startupAudio.play().catch(e => console.log("Erro áudio:", e));
+            runBoot(); 
+        });
+
+        function runBoot() {
+            let lineIndex = 0;
+            let charIndex = 0;
+            
+            function typeLine() {
+                if (lineIndex < bootLines.length) {
+                    const currentLine = bootLines[lineIndex];
+                    if (charIndex < currentLine.length) {
+                        bootTextDiv.textContent += currentLine.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(typeLine, 25);
+                    } else {
+                        bootTextDiv.textContent += "\n";
+                        lineIndex++;
+                        charIndex = 0;
+                        setTimeout(typeLine, 400);
+                    }
+                } else {
+                    // FIM DO BOOT
+                    setTimeout(() => {
+                        bootScreen.style.opacity = 0;
+                        bootScreen.style.transition = "opacity 1s";
+                        stopStartupSound(); 
+
+                        // APLICA O ESTADO DA MEMBRANA NO SISTEMA
+                        if (initialMembraneState.status !== "ESTÁVEL") {
+                            document.documentElement.style.setProperty('--term-green', initialMembraneState.cor);
+                            if(initialMembraneState.danger) {
+                                document.body.classList.add('shake-active');
+                                const logo = document.querySelector('.cris-logo');
+                                if(logo) logo.classList.add('glitch-active');
+                                setTimeout(() => document.body.classList.remove('shake-active'), 1000);
+                            }
+                        }
+
+                        setTimeout(() => {
+                            bootScreen.style.display = "none";
+                            mainInterface.style.display = "flex";
+                            if(window.innerWidth > 800) document.getElementById('user-input').focus();
+                        }, 1000);
+                    }, 500);
+                }
+            }
+            typeLine();
+        }
+
+        // --- RELÓGIO ---
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('pt-BR');
+        }, 1000);
+
+        // =================================================================
+        // CHAT ENGINE
+        // =================================================================
+        const EL = {
+            input: document.getElementById('user-input'),
+            btn: document.getElementById('send-btn'),
+            msgs: document.getElementById('messages'),
+            histList: document.getElementById('history-list-dom')
+        };
+
+        let storageData = JSON.parse(localStorage.getItem('cris_db_v1')) || { currentId: Date.now(), sessions: {} };
+        let currentSession = [];
+        let charQueue = [];
+        let isProcessingQueue = false;
+        let activeTyperId = 0;
+
+        function saveStorage() { localStorage.setItem('cris_db_v1', JSON.stringify(storageData)); }
+
+        function renderHistoryList() {
+            EL.histList.innerHTML = '';
+            const ids = Object.keys(storageData.sessions).reverse();
+            ids.forEach(id => {
+                const session = storageData.sessions[id];
+                const firstUserMsg = session.find(m => m.sender === 'user');
+                const title = firstUserMsg ? firstUserMsg.text.substring(0, 18) + "..." : "Log " + new Date(parseInt(id)).toLocaleTimeString();
+                
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                if (parseInt(id) === storageData.currentId) div.classList.add('active');
+                
+                div.innerHTML = `<span>${title}</span> <span class="delete-btn" onclick="deleteSession(event, ${id})">X</span>`;
+                div.onclick = (e) => { if(!e.target.classList.contains('delete-btn')) switchToSession(parseInt(id)); };
+                EL.histList.appendChild(div);
+            });
+        }
+
+        function startNewSession() {
+            const newId = Date.now();
+            storageData.currentId = newId;
+            storageData.sessions[newId] = [{ sender: 'bot', text: 'C.R.I.S online. Envie sua solicitação.' }];
+            
+            // Reseta cor para o estado atual da membrana (não necessariamente verde)
+            // Se a membrana estiver ruim lá fora, o sistema inicia "contaminado"
+            const mem = calculateMembrane();
+            document.documentElement.style.setProperty('--term-green', mem.cor); 
+
+            saveStorage();
+            switchToSession(newId);
+        }
+
+        function switchToSession(id) {
+            storageData.currentId = id;
+            currentSession = storageData.sessions[id] || [];
+            EL.msgs.innerHTML = '';
+            currentSession.forEach(msg => renderMsgHTML(msg.text, msg.sender));
+            renderHistoryList();
+            setTimeout(() => EL.msgs.scrollTop = EL.msgs.scrollHeight, 100);
+        }
+
+        function deleteSession(e, id) {
+            e.stopPropagation();
+            if(!confirm("Deletar arquivo permanentemente?")) return;
+            delete storageData.sessions[id];
+            if (id === storageData.currentId) startNewSession();
+            else { saveStorage(); renderHistoryList(); }
+        }
+
+        function formatText(text) {
+            return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                       .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                       .replace(/\n/g, '<br>');
+        }
+
+        function renderMsgHTML(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            const span = document.createElement('span');
+            span.innerHTML = formatText(text);
+            div.appendChild(span);
+            EL.msgs.appendChild(div);
+            EL.msgs.scrollTop = EL.msgs.scrollHeight;
+            return span; 
+        }
+
+        function processQueue(targetSpan, fullTextObj, typerId) {
+            if (typerId !== activeTyperId) return;
+            if (charQueue.length > 0) {
+                isProcessingQueue = true;
+                fullTextObj.val += charQueue.shift();
+                checkContextAndChangeColor(fullTextObj.val); 
+                targetSpan.innerHTML = formatText(fullTextObj.val);
+                EL.msgs.scrollTop = EL.msgs.scrollHeight;
+                setTimeout(() => processQueue(targetSpan, fullTextObj, typerId), 15);
+            } else {
+                isProcessingQueue = false;
+                const lastMsg = currentSession[currentSession.length - 1];
+                if (!lastMsg || lastMsg.text !== fullTextObj.val) {
+                    currentSession.push({ sender: 'bot', text: fullTextObj.val });
+                    saveStorage();
+                }
+                toggleInput(true);
+            }
+        }
+
+        function toggleInput(enabled) {
+            EL.input.disabled = !enabled;
+            EL.btn.disabled = !enabled;
+            if(enabled) {
+                EL.input.focus();
+                EL.btn.innerText = "ENVIAR";
+            } else {
+                EL.btn.innerText = "PROCESSANDO...";
+            }
+        }
+
+        async function handleSend() {
+            const text = EL.input.value.trim();
+            if (!text) return;
+
+            // --- COMANDOS E SEGREDOS ---
+            const lowerText = text.toLowerCase();
+
+            if (lowerText === '/clear') {
+                EL.msgs.innerHTML = '';
+                currentSession = [];
+                EL.input.value = '';
+                // Reseta para cor da membrana atual
+                const mem = calculateMembrane();
+                document.documentElement.style.setProperty('--term-green', mem.cor);
+                return;
+            }
+
+            if (lowerText === '/ritual') {
+                // Arte ASCII com barras invertidas escapadas (\\)
+                const ritualArt = `
+                                                                                                                                                  
+                                                                  ██                                                                              
+                                                                  ███                                                                             
+                                                                   ███   ███                                                                      
+                                                                    ███████                                                                       
+                                                                     ██████                                                                       
+                                                                      ████                                                                        
+                                                                     ██████                                                                       
+                                                                  ███████████                                                                     
+                                                        █  ███  █████████████   ███    █                                                          
+                                                  █  █████  ████ █████   █████  ████  ████                                                        
+                                                 █████████ ██████████     ██████████ ███  █████                                                   
+                                             ████ ██    █ ████████████████████████████     ██   ███                                               
+                                        ███ █████   ██████████████████████████████████████    ██████                                              
+                                       █████    ███████████  █████   ██  █    █████   ██████████  █  ████                                         
+                                    █████    ████████ ██  ███████     ████     ███████      ███████  ██████                                       
+                                  █ ███  ████████ ██ ███████████       █        ███████        ███████  ██ █████                                  
+                               ████    ███████  ████  █████████████████████████████████  ██████   ███████  █ ██                                   
+                              █████ ██████   ████████ ████████████████████████████████████████ ███ █ ██████  ██████                               
+                           ████   ████████  ███   █████████████████  ███████████ ████████████ ██ ██ ██  █████  ████                               
+                            ███ █████   ██      ██████  ██████████  █████████ ███   ███████████  █████     ███████   █                            
+                       ████   ██████  ██████ ██████   █████ ██████ █████████ ███     █████   ██████████  ██ ██████  █████                         
+                       ███████████  █████ ██████     █████    █   ███████████  ████   █████     █████   █████ █████ █   ██                        
+                    ███ ██  ████   ████ █████       ████████████ ███ ████ ████████      ████      █████████ ██ ██████████                         
+                   ██████ █████       ██████       ████   █ ██  ████ ████  ████ ███      ████       █████ ████   █████ █                          
+                  ██     ████  ████ ██████       █████ ████ █  ██████████   ████ █████   █████       █████    ███ █████  ██ █                     
+                  █████ ████ █ █ █ ███████      █████ ███████████    ████    █████████     ████       ██████ ████   ████ █ ███                    
+                  ███  ████  ████ ███████      █████   ████ ████     ██████   ████ █  █     █████      ███████    █  █████ ███                    
+                     █████      █████████     █████ █████  █████     ████ ███   ███ █████    █████     ███ ████ █████ ████  ████                  
+              ███████████████  ████  ███     █████   ████ █████      ████   ██   ███ ███      ████      ███ ████████ █ ████ ████                  
+              ████  ████ █  █ ████  ████    █████ ████   █████       ████   █████ ███ ██████   ████     ████  ████████  ████  ███                 
+                ██ ████ █████████  ████    █████   ████ █████        ████  ███████ ██████       █████    ████  ████      ████████                 
+            ██     ████  ███████   ████   ████    █    █████         ████  ███████  ████ ████    █████   ████  ████  ███ █████  ██                
+            █████ ████ ███  ███   ████   █████  ████  ████           ████    ████    ████ ████    █████  █████  ███ ███ █ ████ █████              
+              █  ████   ██ ███    ████  █████  █████ ████            ████       ██    ████    █    █████ █████  ████      █████                   
+           █████ ████  ██  ██    █████  ████ ████   ████              ███       ██     ██████████    █████████   ████ ███ █████ ████              
+           █████ ███       ██    ██████████  █████ ██████            ████       ██       ██████      █████ ████  ██████    ████ ████              
+           █  ██████  ███ ███    █  ██████        ██████████         ████       ██ ██    ████   ███   ██████ ██   ████ ███ ████ ██ █              
+          █████ ████ ████████    █  █████ ██████ ████    █████       ████      ██   ██     ███ ███     █████ ██   █████████ ███ █████             
+           █████████  ██████     █ █████   ███  ████       █████     ████      ████████     ███     █   ███████   ████      ████ █████            
+            ██  ███   █  ███     █████  ████ █ ██████        ██      ████     ███   ████████████  ████   ██████    ███ ███  ████ █                
+          ███ █ ███ ████ ███     ████  ██████ ████   ███       ██    ████    ███████████ ███████████  █   █████    ███ ████ ████ ████             
+           ███  ███ ██   ███    ████   ███   ████      ██       ██    ███   ███████  ██  ██    █████████    ████   ███   █  ███████ ██            
+            █   ███  ███████   ████    ███  ████        ██       █    ███  ██████   ██  ███     ███████      ████  ███ ████ ████                  
+           ███  ████  ██ ███ █████   █     ████          ██       ███ ███████████  ██  ███       ████ ████    ████ ████████ ████ ████             
+              █ ████  ███████████  █████  ███             ██      ███ ███   ██   ██████           █████████    ███████      ██████████            
+          █████ ████ ███████████  ██     ████             ██       ██ ███  ███ ███                 ████ ██      █████████   ███   █               
+           ████ ████ ██████████   █████ ████               ██      ██ ███  ████                     █████████    ████████   ███                   
+                 █████████████  ███    █████  ███  ██      ██     ███████████                       █████ █████  █████████ ████ ███               
+           ███ ██████ █████████ ████  ████   ██  █  ██     █      ███████  ███                      ██████████   █████████ █████████              
+            ██ █ ██████████████  █   ████    ██  ██ ██    ██      ██  ███   ██                     ███  ███    ██████████ ████                    
+                  █████████ █████   ████      ███████    ██      ███ ████   ████                 █████  ███████████  ██████████████               
+              ███ ████████   ███  ██████        ██      ██      ███  ████     ████             █████     ████  ████   ███████ █ ███               
+             ███   ██████    ████████  ██      ███      ████   ███   ████      █████████ █ ██████████████████████      █████ ██ █                 
+              ██████████       █████████████████████████████████████████████████████████████████████████████████  ███   ██████████                
+                █████████   ██  ███████████ ██████████   ██████████████████████████                         ███  █████  ███████                   
+                 █████████ █████ ████  ███ █ ███    █    █   █  ████ ████ █  ██   ██   ██   ███ ████████ ███████████████████████                  
+                █████ ████████    ████ ████ ██████  ████████████████████████  ███████  ███  ███ ████ █████████    █  ████  ██████                 
+               █████    ████       █████ ██ █████  ███  ███ ██ █  █  ██████ ████ ██   ████   ██  ██   ██████       █████   ███████                
+              ████████████████████████████████████████████████████████████ ███████████████████████████████████████████████████████                
+       ████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████       
+            ██████████████ ████████████████████████████ ██████████ ██████████████████            ██████ █████████████████       ███████           
+            ███        █████ █████   ███████████             ████ ██ ████  ████ █              ██████  ████  ██████ █████        █████            
+           ███           ████  █████ █████ ████████          ████ ██ ████  ████ █           ██████  ████    ██████   ██           ████            
+          █         ██     █     █████     ████████████        ███ ████████████         ███████  ████ █   █████  ████               ██            
+                      ██     ████  █████  ███   █   ██████████  ███  ████  ████   █████████ █████ ███   █████ ███  ██                             
+                       ███    █████  ██████   ████   █  ███████████████████████████████ █████████    ██████   ███        ██                       
+                         ███  ██   ██  ███████  ██  ███ ███   ███████████████████   ███  ████ █   ██████  ███ █ ██   ████                         
+                          █████  █████    ████████   █ ████ █████ ██ ████  ██  ███  ███   █   ████████    ████     ████                           
+                            █████       ███  █████████      ███   ███████████   ██  █    █████████   ██████     █████                             
+                              ██████ ████  ███   ██████████        █ ████   █      ███████████   ██████████  ██████                               
+                                ███████    ████  █    █████████████████████████████████████ ██   ████  █  ███████                                 
+                                   ███████ ███ █████ ██   ██████████████████████████    ██ ██████  ██   ██████                                    
+                                      ███████  ████  ███ ███  █      ████       █████   ████████    ███████                                       
+                                         ██████     ████ ███ ████████████  ████ █████    ██     ████████                                          
+                                             ███████     █  ████   ███████ ███  █  █       ██████████                                             
+                                                █████████████        ████           █████████████                                                 
+                                                     ██████████████████████████████████████ █                                                     
+                                                              ███████████████████████                                                             
+                `;
+                const div = document.createElement('div');
+                div.className = 'message bot';
+                // Coloca a arte dentro do container e adiciona a mensagem embaixo
+                div.innerHTML = `<div class="ascii-art">${ritualArt}</div><span>DETECTADO SINAL DE O.P. EM ALTA FREQUÊNCIA.</span>`;
+                EL.msgs.appendChild(div);
+                EL.msgs.scrollTop = EL.msgs.scrollHeight;
+                document.documentElement.style.setProperty('--term-green', '#bd00ff');
+                EL.input.value = '';
+                return;
+            }
+
+            if (lowerText === '/membrana') {
+                // Usa a mesma função do boot!
+                const estado = calculateMembrane();
+                
+                renderMsgHTML(`ANÁLISE ESTRUTURAL DA REALIDADE:<br>HORÁRIO LOCAL: ${new Date().toLocaleTimeString()}<br>STATUS: [ ${estado.status} ]<br>OBS: ${estado.log}<br>DIAGNÓSTICO: ${estado.msg}`, 'bot');
+                
+                document.documentElement.style.setProperty('--term-green', estado.cor);
+                
+                if(estado.status === "ROMPIDA") {
+                    document.body.classList.add('shake-active');
+                    const logo = document.querySelector('.cris-logo');
+                    if(logo) logo.classList.add('glitch-active');
+                    setTimeout(() => {
+                        document.body.classList.remove('shake-active');
+                        // Glitch do logo mantemos se for rompida? Melhor tirar pra não cansar a vista
+                        if(logo) logo.classList.remove('glitch-active');
+                    }, 2000);
+                }
+                EL.input.value = '';
+                return;
+            }
+
+            if (lowerText === '/nex') {
+                const nex = Math.floor(Math.random() * 99) + 1;
+                let classe = "MUNDANO"; let cor = "#00ff41";
+                if (nex > 10) { classe = "INICIADO"; cor = "#ffff00"; }
+                if (nex > 45) { classe = "AGENTE EXPERIENTE"; cor = "#ffaa00"; }
+                if (nex > 80) { classe = "AGENTE DE ELITE"; cor = "#ff0000"; }
+                if (nex === 99) { classe = "CALAMIDADE"; cor = "#ffffff"; }
+
+                renderMsgHTML(`CALCULANDO EXPOSIÇÃO PARANORMAL...<br>NEX ATUAL: [ ${nex}% ]<br>CLASSIFICAÇÃO: ${classe}`, 'bot');
+                document.documentElement.style.setProperty('--term-green', cor);
+                EL.input.value = '';
+                return;
+            }
+            
+            if (lowerText === '/credits' || lowerText === '/creditos') {
+                const creditsContent = `
+<div style="border: 1px dashed var(--term-dim); padding: 15px; background: rgba(0, 20, 0, 0.5);">
+    <div style="text-align: center; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;">/// CRÉDITOS DO SISTEMA ///</div>
+    <br>
+    <strong>OPERADOR/DEV:</strong> Agente Ricardo de Castro
+    <br>
+    <strong>VERSÃO:</strong> C.R.I.S. v2.0.4
+    <br>
+    <strong>BASE DE DADOS:</strong> Ordem Paranormal Wiki
+    <br>
+    <strong>MOTOR NEURAL:</strong> DeepSeek-V3 via SiliconFlow
+    <br>
+    <strong>INSPIRAÇÃO:</strong> Universo de Ordem Paranormal (Cellbit)
+    <br><br>
+    <div style="font-style: italic; opacity: 0.8; text-align: center;">
+        "O paranormal não vem para a nossa realidade de maneira fácil."
+    </div>
+    <br>
+    <div style="text-align: center;">--- FIM DO ARQUIVO ---</div>
+</div>`;
+                const div = document.createElement('div');
+                div.className = 'message bot';
+                div.innerHTML = `<span>${creditsContent}</span>`;
+                EL.msgs.appendChild(div);
+                EL.msgs.scrollTop = EL.msgs.scrollHeight;
+                document.documentElement.style.setProperty('--term-green', '#00ffff');
+                document.documentElement.style.setProperty('--term-dim', '#008f8f');
+                EL.input.value = '';
+                return;
+            }
+
+            if (lowerText === '/shutdown' || lowerText === '/exit') {
+                renderMsgHTML("ENCERRANDO SESSÃO...", 'bot');
+                renderMsgHTML("DESCONECTANDO DA MEMBRANA...", 'bot');
+                setTimeout(() => {
+                    if(typeof startupAudio !== 'undefined') startupAudio.pause();
+                    const amb = document.getElementById('ambience-sound');
+                    if(amb) amb.pause();
+                    document.body.classList.add('shutdown-mode');
+                }, 1500);
+                EL.input.value = '';
+                return;
+            }
+
+            if (lowerText === '/kian') {
+                renderMsgHTML("ACESSO NEGADO. A ENTIDADE SOLICITADA NÃO EXISTE NOS REGISTROS ACESSÍVEIS.", 'bot');
+                document.documentElement.style.setProperty('--term-green', '#ffffff');
+                EL.input.value = '';
+                return;
+            }
+            // -------------------------
+
+            renderMsgHTML(text, 'user');
+            currentSession.push({ sender: 'user', text });
+            saveStorage();
+            renderHistoryList();
+            
+            EL.input.value = '';
+            toggleInput(false);
+
+            const botSpan = renderMsgHTML("...", 'bot'); 
+            activeTyperId++;
+            const currentId = activeTyperId;
+            charQueue = [];
+            const fullTextObj = { val: "" };
+            let firstChunk = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                if (!response.ok) throw new Error("Erro de conexão com a Membrana.");
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    
+                    if (firstChunk) { botSpan.innerHTML = ""; firstChunk = false; }
+
+                    for (const char of chunk) charQueue.push(char);
+                    
+                    if (!isProcessingQueue) processQueue(botSpan, fullTextObj, currentId);
+                }
+            } catch (err) {
+                botSpan.innerHTML = "<span style='color:red'>[ERRO CRÍTICO]: SERVIDOR INACESSÍVEL.</span>";
+                toggleInput(true);
+            }
+        }
+
+        EL.btn.onclick = handleSend;
+        EL.input.onkeypress = (e) => { if(e.key === 'Enter') handleSend(); };
+        
+        if (!storageData.sessions[storageData.currentId]) startNewSession();
+        else switchToSession(storageData.currentId);
+
+        // Favicon Preto
+        function setBlackFavicon() {
+            const img = new Image();
+            img.src = 'Logo_Ordo_Realitas.webp'; 
+            img.crossOrigin = "Anonymous";
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                ctx.globalCompositeOperation = 'source-in';
+                ctx.fillStyle = '#000000'; // Ícone Preto
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const link = document.getElementById('favicon') || document.createElement('link');
+                link.id = 'favicon'; link.rel = 'icon'; link.href = canvas.toDataURL();
+                document.head.appendChild(link);
+            };
+        }
+
+        window.onload = () => {
+            // Boot manual via click (já configurado no evento do overlay)
+            setBlackFavicon();
+        };
+
+    </script>
+</body>
+</html>
