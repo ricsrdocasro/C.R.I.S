@@ -16,7 +16,7 @@ Este repositório contém o código fonte completo desta Inteligência Artificia
 
 ### 🌐 Acesso Rápido (Live Version)
 O sistema está operante e pode ser acessado diretamente pelo terminal seguro:
-👉 **[Acessar C.R.I.S Terminal](https://ricsrdocasro.github.io/C.R.I.S/frontend/)**
+👉 **[Acessar C.R.I.S Terminal](https://ricsrdocasro.github.io/C.R.I.S/)**
 
 ---
 
