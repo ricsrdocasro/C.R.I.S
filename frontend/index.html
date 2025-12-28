@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>C.R.I.S. /// TERMINAL_ACCESS</title>
     <link id="favicon" rel="icon" href="Logo_Ordo_Realitas_Verde.png">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -12,24 +12,31 @@
             --bg-color: #050505;
             --term-green: #00ff41; /* Verde Matrix (Padrão) */
             --term-dim: #008F11;
-            --glass: rgba(0, 20, 0, 0.9);
             
             /* Cores dos Elementos */
-            --sangue: #ff0000;
+            --sangue: #ff3333;
             --morte: #a0a0a0;
             --conhecimento: #ffcc00;
             --energia: #bf00ff;
-            --medo: #ffffff; /* Branco/Transparente */
+            --medo: #ffffff;
         }
 
         * { box-sizing: border-box; }
         
+        /* --- SCROLLBAR CUSTOMIZADA --- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #020202; border-left: 1px solid #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: var(--term-dim); border: 1px solid var(--bg-color); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--term-green); cursor: pointer; }
+        ::-webkit-scrollbar-corner { background: #000; }
+        * { scrollbar-width: thin; scrollbar-color: var(--term-dim) #000; }
+
         body {
             background-color: var(--bg-color);
             font-family: 'Fira Code', monospace;
             margin: 0; padding: 0;
             color: var(--term-green);
-            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             display: flex; flex-direction: column;
             text-shadow: 0 0 4px var(--term-dim);
@@ -79,11 +86,14 @@
             border-bottom: 1px solid var(--term-dim);
             padding: 10px 20px; background: #001100;
             display: flex; justify-content: space-between; align-items: center;
+            height: 50px; flex-shrink: 0;
+            z-index: 10;
         }
         
         main {
             flex: 1; display: flex; padding: 20px; gap: 20px;
-            max-width: 1400px; margin: 0 auto; width: 100%; height: 100%; overflow: hidden;
+            max-width: 1400px; margin: 0 auto; width: 100%; height: calc(100% - 50px); overflow: hidden;
+            position: relative;
         }
 
         /* --- SIDEBAR --- */
@@ -105,9 +115,9 @@
             filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(0 0 5px var(--term-green));
             opacity: 0.9; transition: all 0.5s;
         }
-        .cris-logo img:hover {
-            filter: grayscale(100%) brightness(1.2) sepia(100%) hue-rotate(50deg) saturate(1000%) drop-shadow(0 0 15px var(--term-green));
-            transform: scale(1.05);
+        .glitch-active img {
+            animation: glitch-contained 3s infinite;
+            will-change: clip-path, transform, filter;
         }
 
         .sys-version { margin-top: 10px; font-size: 0.7rem; letter-spacing: 2px; opacity: 0.7; }
@@ -143,6 +153,7 @@
             background: rgba(0, 10, 0, 0.4);
             box-shadow: inset 0 0 80px rgba(0,0,0,0.9);
             transition: border-color 0.5s;
+            overflow: hidden;
         }
 
         .messages-area {
@@ -163,6 +174,15 @@
         .message.bot { align-self: flex-start; color: var(--term-green); border-left-color: var(--term-green); }
         .message.bot::before { content: "[C.R.I.S]: "; font-weight: bold; }
 
+        /* Classes para Cores de Elementos */
+        .element-sangue { color: var(--sangue) !important; text-shadow: 0 0 8px var(--sangue); font-weight: bold; }
+        .element-morte { color: var(--morte) !important; text-shadow: 0 0 8px var(--morte); font-weight: bold; }
+        .element-conhecimento { color: var(--conhecimento) !important; text-shadow: 0 0 8px var(--conhecimento); font-weight: bold; }
+        .element-energia { color: var(--energia) !important; text-shadow: 0 0 8px var(--energia); font-weight: bold; }
+        .element-medo { color: var(--medo) !important; text-shadow: 0 0 10px #fff; font-weight: bold; animation: text-glitch 0.2s infinite; }
+
+        @keyframes text-glitch { 0% { opacity: 1; } 50% { opacity: 0.7; transform: skewX(10deg); } 100% { opacity: 1; } }
+
         .message b { color: white; text-shadow: 0 0 5px white; }
         .message i { color: inherit; font-style: italic; opacity: 0.8; }
 
@@ -170,6 +190,7 @@
         .input-area {
             border-top: 1px solid var(--term-dim); padding: 15px;
             display: flex; gap: 10px; background: #000;
+            flex-shrink: 0;
         }
         .prompt-symbol { padding: 10px 0 10px 5px; font-weight: bold; font-size: 1.2rem; }
 
@@ -188,56 +209,17 @@
         button#send-btn:hover { background: var(--term-green); color: black; box-shadow: 0 0 10px var(--term-green); }
         button#send-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; box-shadow: none; }
 
-	    /* --- NOVO EFEITO GLITCH (CONTIDO E ANALÓGICO) --- */
+        /* --- KEYFRAMES GLITCH --- */
         @keyframes glitch-contained {
-            0% {
-                clip-path: inset(0 0 0 0);
-                transform: translate(0);
-                /* Filtro normal verde */
-                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%);
-            }
-            2% {
-                clip-path: inset(10% 0 85% 0);
-                transform: translate(-5px, 0);
-                /* Filtro com leve desvio de cor ciano */
-                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(5px 0 0 rgba(0, 255, 255, 0.5));
-            }
-            4% {
-                clip-path: inset(60% 0 30% 0);
-                transform: translate(8px, 0);
-                /* Filtro com leve desvio de cor vermelho */
-                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(-5px 0 0 rgba(255, 0, 0, 0.5));
-            }
-            6% {
-                clip-path: inset(20% 0 60% 0);
-                transform: translate(-3px, 0);
-            }
-            8% {
-                clip-path: inset(0 0 0 0);
-                transform: translate(0);
-                /* Retorna ao normal */
-                filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%);
-            }
-            /* Pausa longa sem efeito */
-            100% {
-                clip-path: inset(0 0 0 0);
-                transform: translate(0);
-            }
+            0% { clip-path: inset(0 0 0 0); transform: translate(0); filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%); }
+            2% { clip-path: inset(10% 0 85% 0); transform: translate(-5px, 0); filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(5px 0 0 rgba(0, 255, 255, 0.5)); }
+            4% { clip-path: inset(60% 0 30% 0); transform: translate(8px, 0); filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%) drop-shadow(-5px 0 0 rgba(255, 0, 0, 0.5)); }
+            6% { clip-path: inset(20% 0 60% 0); transform: translate(-3px, 0); }
+            8% { clip-path: inset(0 0 0 0); transform: translate(0); filter: grayscale(100%) brightness(0.8) sepia(100%) hue-rotate(50deg) saturate(500%); }
+            100% { clip-path: inset(0 0 0 0); transform: translate(0); }
         }
 
-        .glitch-active img {
-            /* Animação rápida que se repete a cada 3 segundos */
-            animation: glitch-contained 3s infinite;
-            /* Garante que o efeito não vaze do container */
-            will-change: clip-path, transform, filter;
-        }
-
-        /* Desativa o tremor do container para um efeito mais contido */
-        .glitch-active {
-            animation: none;
-        }
-
-        /* Animação de Desligar CRT */
+        /* --- SHUTDOWN --- */
         @keyframes turn-off {
             0% { transform: scale(1, 1.3) translate3d(0, 0, 0); filter: brightness(1); opacity: 1; }
             60% { transform: scale(1, 0.001) translate3d(0, 0, 0); filter: brightness(10); }
@@ -248,41 +230,78 @@
             animation-fill-mode: forwards;
         }
 
-        /* --- ESTILO PARA ARTE ASCII (RITUAIS) --- */
+        /* --- ASCII ART --- */
         .ascii-art {
             font-family: 'Fira Code', 'Courier New', monospace;
-            white-space: pre; /* Mantém espaços exatos */
-            font-size: 8px;   /* Tamanho base pequeno para caber arte grande */
-            line-height: 8px; /* Altura da linha coladinha pra não esticar o desenho */
-            color: var(--term-dim);
-            margin: 10px 0;
-            overflow-x: auto; /* Permite rolar pro lado se não couber */
-            width: 100%;
-            display: block;
-            text-align: center; /* Centraliza o bloco */
+            white-space: pre; font-size: 8px; line-height: 8px;
+            color: inherit; margin: 10px 0; overflow-x: auto;
+            width: 100%; display: block; text-align: center;
+        }
+        @media (max-width: 600px) { .ascii-art { font-size: 4px; line-height: 4px; } }
+
+        /* --- TOOLTIP FLUTUANTE --- */
+        .tooltip-box {
+            position: fixed;
+            display: none; 
+            background: rgba(0, 15, 0, 0.95);
+            border: 1px solid var(--term-green);
+            color: var(--term-green);
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            max-width: 250px;
+            z-index: 10000;
+            pointer-events: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(2px);
+        }
+        .tooltip-title {
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            margin-bottom: 5px;
+            padding-bottom: 2px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .has-tooltip {
+            cursor: help;
+            text-decoration: underline dotted rgba(255, 255, 255, 0.3);
         }
 
-        /* No celular, diminui ainda mais */
-        @media (max-width: 600px) {
-            .ascii-art {
-                font-size: 4px; /* Minúsculo para tentar caber no celular */
-                line-height: 4px;
-            }
-        }
+        /* =================================================================
+           LAYOUT MOBILE RESPONSIVO
+           ================================================================= */
+        #mobile-menu-btn { display: none; }
 
-        /* MOBILE */
         @media (max-width: 800px) {
-            main { flex-direction: column; padding: 10px; }
-            .sidebar { width: 100%; height: auto; flex-direction: row; align-items: center; padding: 5px;}
-            .logo-area { padding: 5px; border: none; flex-direction: row; gap: 10px;}
-            .cris-logo img { width: 50px; }
-            .sys-version { display: none; }
-            .sidebar-header, .history-list { display: none; }
-            .new-chat-btn { flex: 1; border: none; border-left: 1px solid var(--term-dim); padding: 10px; font-size: 0.8rem;}
+            main { padding: 10px; width: 100vw; }
+            header { padding-left: 60px; font-size: 0.9rem; }
+
+            #mobile-menu-btn {
+                display: block; position: fixed; top: 10px; left: 10px;
+                z-index: 2000; background: black; border: 1px solid var(--term-green);
+                color: var(--term-green); padding: 5px 10px;
+                font-family: 'Fira Code'; cursor: pointer; font-weight: bold;
+            }
+
+            .sidebar {
+                position: fixed; top: 0; left: -110%; width: 85%; height: 100%;
+                background: #000; z-index: 3000;
+                border-right: 2px solid var(--term-green);
+                box-shadow: 100px 0 100px rgba(0,0,0,0.8);
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .sidebar.active { left: 0; }
+            .input-area { padding: 10px; }
+            input { font-size: 16px; }
+            button#send-btn { padding: 0 15px; font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
+
+    <button id="mobile-menu-btn" onclick="toggleSidebar()">☰ MENU</button>
+    <div id="menu-overlay" onclick="toggleSidebar()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2500; background:rgba(0,0,0,0.5);"></div>
 
     <div class="scanlines"></div>
 
@@ -312,6 +331,7 @@
             <div class="sidebar-header">/// ARQUIVOS ///</div>
             <div class="history-list" id="history-list-dom"></div>
             <div class="new-chat-btn" onclick="startNewSession()">[+] NOVO PROTOCOLO</div>
+            <div style="padding:10px; text-align:center; border-top:1px solid #004400; font-size:0.8rem; cursor:pointer;" onclick="toggleSidebar()" class="mobile-only-close">FECHAR MENU</div>
         </aside>
 
         <section class="chat-interface">
@@ -326,15 +346,176 @@
 
     <script>
         // =================================================================
-        // CONFIGURAÇÃO
+        // CONFIGURAÇÃO DO SISTEMA & ESTADO
         // =================================================================
         const API_URL = "https://ricsrdocasro-c-r-i-s-backend.hf.space/chat"; 
-        
-        // SOM DE INICIALIZAÇÃO
         const startupAudio = new Audio('startup.mp3');
         startupAudio.volume = 0.5;
 
-        // Função para cessar o som gradualmente
+        // Recupera ou cria configuração do sistema
+        let sysConfig = JSON.parse(localStorage.getItem('cris_sys_config_v1')) || { 
+            status: 'shutdown', // 'shutdown' ou 'active'
+            seenBoot: false,    // true se já viu a intro completa
+            username: null
+        };
+
+        function saveSysConfig() {
+            localStorage.setItem('cris_sys_config_v1', JSON.stringify(sysConfig));
+        }
+
+        // =================================================================
+        // ELEMENTOS DOM
+        // =================================================================
+        const EL = {
+            input: document.getElementById('user-input'),
+            btn: document.getElementById('send-btn'),
+            msgs: document.getElementById('messages'),
+            histList: document.getElementById('history-list-dom'),
+            bootText: document.getElementById('boot-text'),
+            mainInterface: document.getElementById('main-interface'),
+            bootScreen: document.getElementById('boot-screen'),
+            initOverlay: document.getElementById('init-overlay')
+        };
+
+        // =================================================================
+        // CONTROLE DE INICIALIZAÇÃO (LÓGICA NOVA)
+        // =================================================================
+        
+        window.onload = () => {
+            if (sysConfig.status === 'active') {
+                EL.initOverlay.style.display = 'none';
+                EL.mainInterface.style.display = 'flex';
+                renderHistoryList(); 
+
+                // CORREÇÃO: Força o carregamento visual da sessão atual ao iniciar
+                if (storageData.currentId && storageData.sessions[storageData.currentId]) {
+                    switchToSession(storageData.currentId);
+                }
+
+                setTimeout(() => EL.msgs.scrollTop = EL.msgs.scrollHeight, 100);
+            } else {
+                EL.initOverlay.style.display = 'flex';
+                EL.mainInterface.style.display = 'none';
+            }
+        };
+
+        EL.initOverlay.addEventListener('click', () => {
+            // Pergunta o nome na primeira vez
+            if (!sysConfig.username) {
+                let nameInput = prompt("IDENTIFICAÇÃO NECESSÁRIA.\nDIGITE SEU CODINOME:");
+                if (nameInput && nameInput.trim() !== "") {
+                    sysConfig.username = nameInput.trim().toUpperCase();
+                } else {
+                    sysConfig.username = "AGENTE_DESCONHECIDO";
+                }
+                saveSysConfig(); 
+            }
+
+            EL.initOverlay.style.display = 'none';
+            EL.bootScreen.style.display = 'flex';
+            startupAudio.play().catch(e => console.log("Erro áudio:", e));
+
+            if (!sysConfig.seenBoot) {
+                runFullBootSequence();
+                sysConfig.seenBoot = true; 
+            } else {
+                runFastBoot();
+            }
+            
+            sysConfig.status = 'active';
+            saveSysConfig();
+        });
+
+        // =================================================================
+        // SEQUÊNCIAS DE BOOT
+        // =================================================================
+        
+        function runFullBootSequence() {
+            const memState = calculateMembrane();
+            const bootLines = [
+                "INICIANDO SISTEMA...",
+                "CARREGANDO KERNEL...",
+                "ACESSANDO SENSORES DE REALIDADE...",
+                `VERIFICANDO MEMBRANA... <span style="color:${memState.cor}; text-shadow:0 0 10px ${memState.cor}; font-weight:bold;">${memState.status}</span>.`,
+                "DETECTANDO SINAIS DE RITUAIS...",
+                "CONECTANDO AO SERVIDOR C.R.I.S...",
+                `> USUÁRIO: ${sysConfig.username}`,
+                "ACESSO AUTORIZADO.",
+                "BEM-VINDO À ORDEM."
+            ];
+
+            let lineIndex = 0;
+            let charIndex = 0;
+            
+            function typeLine() {
+                if (lineIndex < bootLines.length) {
+                    const currentLine = bootLines[lineIndex];
+                    
+                    if (currentLine.includes('<span')) {
+                        const parts = currentLine.split('<span'); 
+                        const prefix = parts[0]; 
+                        const suffix = '<span' + parts[1]; 
+                        
+                        if (charIndex < prefix.length) {
+                            EL.bootText.innerHTML += prefix.charAt(charIndex);
+                            charIndex++;
+                            setTimeout(typeLine, 20);
+                            return; 
+                        } else {
+                            EL.bootText.innerHTML += suffix + "\n";
+                            lineIndex++;
+                            charIndex = 0;
+                            setTimeout(typeLine, 300);
+                            return;
+                        }
+                    } 
+                    
+                    if (charIndex < currentLine.length) {
+                        EL.bootText.innerHTML += currentLine.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(typeLine, 20);
+                    } else {
+                        EL.bootText.innerHTML += "\n";
+                        lineIndex++;
+                        charIndex = 0;
+                        setTimeout(typeLine, 300);
+                    }
+                } else {
+                    finishBoot();
+                }
+            }
+            typeLine();
+        }
+
+        function runFastBoot() {
+            EL.bootText.innerHTML = `REESTABELECENDO CONEXÃO SEGURA...<br>AUTENTICANDO ${sysConfig.username}...<br>ACESSO RESTAURADO.`;
+            setTimeout(finishBoot, 1500); 
+        }
+
+        function finishBoot() {
+            setTimeout(() => {
+                EL.bootScreen.style.opacity = 0;
+                EL.bootScreen.style.transition = "opacity 1s";
+                stopStartupSound(); 
+                setTimeout(() => {
+                    EL.bootScreen.style.display = "none";
+                    EL.mainInterface.style.display = "flex";
+                    EL.bootScreen.style.opacity = 1; 
+                    EL.bootText.innerHTML = "";
+                }, 1000);
+            }, 500);
+        }
+
+        // =================================================================
+        // FUNÇÕES UTILITÁRIAS (SOM, SIDEBAR, RELÓGIO)
+        // =================================================================
+        function toggleSidebar() {
+            const sb = document.querySelector('.sidebar');
+            const ov = document.getElementById('menu-overlay');
+            sb.classList.toggle('active');
+            ov.style.display = sb.classList.contains('active') ? 'block' : 'none';
+        }
+
         function stopStartupSound() {
             const fadeAudio = setInterval(() => {
                 if (startupAudio.volume > 0.05) {
@@ -347,8 +528,12 @@
             }, 200);
         }
 
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('pt-BR');
+        }, 1000);
+
         // =================================================================
-        // LÓGICA DA MEMBRANA (CENTRALIZADA)
+        // LÓGICA DA MEMBRANA & TOOLTIPS
         // =================================================================
         function calculateMembrane() {
             const now = new Date();
@@ -357,168 +542,153 @@
             const day = now.getDay(); 
             const date = now.getDate(); 
 
-            // Fatores de Realidade
-            const isWitchingHour = (hour === 3); // 03:00 AM
+            const isWitchingHour = (hour === 3);
             const isNight = (hour >= 18 || hour < 6);
             const isFriday13 = (day === 5 && date === 13);
             
             let baseChance = Math.random(); 
             let logExtra = "Níveis de entropia padrão.";
 
-            // Modificadores
             if (isFriday13) {
-                baseChance += 0.5; 
-                logExtra = "ALERTA: DATA DE CONVERGÊNCIA OCULTA (SEXTA-13).";
+                baseChance += 0.5; logExtra = "ALERTA: DATA DE CONVERGÊNCIA OCULTA (SEXTA-13).";
             } else if (isWitchingHour) {
-                baseChance += 0.4; 
-                logExtra = `HORA MORTA DETECTADA [03:${minutes < 10 ? '0'+minutes : minutes}]. BARREIRA NO LIMITE.`;
+                baseChance += 0.4; logExtra = `HORA MORTA DETECTADA [03:${minutes < 10 ? '0'+minutes : minutes}]. BARREIRA NO LIMITE.`;
             } else if (isNight) {
-                baseChance += 0.15; 
-                logExtra = "Ausência de luz solar favorece o afinamento.";
+                baseChance += 0.15; logExtra = "Ausência de luz solar favorece o afinamento.";
             }
 
-            // Definição dos Estados
-            if (baseChance > 0.85) {
-                return { status: "ROMPIDA", cor: "#ff0000", msg: "PERIGO IMEDIATO. ENTIDADES MANIFESTANDO.", log: logExtra, danger: true };
-            } else if (baseChance > 0.6) {
-                return { status: "DANIFICADA", cor: "#ffaa00", msg: "Afinamento crítico. Prepare rituais.", log: logExtra, danger: false };
-            } else if (baseChance > 0.3) {
-                return { status: "ENFRAQUECIDA", cor: "#ffff00", msg: "Oscilações detectadas.", log: logExtra, danger: false };
-            } else {
-                return { status: "ESTÁVEL", cor: "#00ff41", msg: "Nenhuma perturbação local.", log: logExtra, danger: false };
-            }
+            if (baseChance > 0.85) return { status: "ROMPIDA", cor: "#ff0000", msg: "PERIGO IMEDIATO. ENTIDADES MANIFESTANDO.", log: logExtra, danger: true };
+            else if (baseChance > 0.6) return { status: "DANIFICADA", cor: "#ffaa00", msg: "Afinamento crítico. Prepare rituais.", log: logExtra, danger: false };
+            else if (baseChance > 0.3) return { status: "ENFRAQUECIDA", cor: "#ffff00", msg: "Oscilações detectadas.", log: logExtra, danger: false };
+            else return { status: "ESTÁVEL", cor: "#00ff41", msg: "Nenhuma perturbação local.", log: logExtra, danger: false };
         }
 
-        // =================================================================
-        // EFEITOS DE ELEMENTOS E CORES
-        // =================================================================
-        function checkContextAndChangeColor(text) {
-            const t = text.toLowerCase();
-            const root = document.documentElement;
-            const logoDiv = document.querySelector('.cris-logo');
-            
-            let color = '#00ff41'; // Padrão
-            let dimColor = '#008F11';
-            let isGlitchy = false;
-
-            // --- LORE ---
-            if (t.includes('medo') || t.includes('infinito') || t.includes('desconhecido') || 
-                t.includes('enigma') || t.includes('degolificada') || t.includes('névoa') || 
-                t.includes('cinerária') || t.includes('impossível') || t.includes('deus') || t.includes('kian')) {
-                color = '#ffffff'; dimColor = '#cccccc'; isGlitchy = true;
-            } 
-            else if (t.includes('sangue') || t.includes('ódio') || t.includes('dor') || t.includes('sentimento') || t.includes('diabo')) {
-                color = '#ff3333'; dimColor = '#800000';
-            } else if (t.includes('morte') || t.includes('lodo') || t.includes('espiral') || t.includes('tempo')) {
-                color = '#a0a0a0'; dimColor = '#404040'; isGlitchy = true;
-            } else if (t.includes('conhecimento') || t.includes('saber') || t.includes('verdade') || t.includes('sigilo') || t.includes('magistrada')) {
-                color = '#ffd700'; dimColor = '#b8860b';
-            } else if (t.includes('energia') || t.includes('caos') || t.includes('transformação') || t.includes('anfitrião')) {
-                color = '#bd00ff'; dimColor = '#4b0082'; isGlitchy = true;
+        // 1. Definição dos Dados (Palavras + Descrições baseadas na Lore)
+        const loreDatabase = [
+            { 
+                words: ['sangue', 'ódio', 'dor', 'raiva', 'violência', 'diabo', 'sentimento', 'emoção', 'bestial', 'flagelo', 'rubra', 'carnificina', 'obsessão', 'fluxo'], 
+                class: 'element-sangue',
+                title: 'ENTIDADE DE SANGUE',
+                desc: 'A entidade do sentimento. Busca a intensidade da dor, do amor e da obsessão. Tudo começa pelo sangue e termina nele. Se manifesta através de carne viva, bestialidade e brutalidade.'
+            },
+            { 
+                words: ['morte', 'lodo', 'espiral', 'podridão', 'tempo', 'segundos', 'eterno', 'parasita', 'distorção', 'inevitável', 'cinzas'], 
+                class: 'element-morte',
+                title: 'ENTIDADE DE MORTE',
+                desc: 'A entidade do Tempo. Representa os momentos vivenciados e o fim inevitável. Distorce a percepção temporal através de espirais e do lodo sagrado que consome a matéria.'
+            },
+            { 
+                words: ['conhecimento', 'saber', 'verdade', 'sigilo', 'outro lado', 'razão', 'lógica', 'regras', 'escritura', 'ouro', 'dourado', 'ordem', 'história'], 
+                class: 'element-conhecimento',
+                title: 'ENTIDADE DE CONHECIMENTO',
+                desc: 'A entidade da Consciência. A lógica que reescreve a realidade através de sigilos e regras. Busca o equilíbrio e a anulação do caos. Onde há ordem, há Conhecimento.'
+            },
+            { 
+                words: ['energia', 'caos', 'transformação', 'impossível', 'energização', 'eletricidade', 'fogo', 'luz', 'calor', 'imprevisível', 'glitch', 'intangível'], 
+                class: 'element-energia',
+                title: 'ENTIDADE DE ENERGIA',
+                desc: 'A entidade do Caos. O intangível que tudo transforma. Representada por luz, temperatura e vibração. A Energia não segue lógica, apenas a pura aleatoriedade da mudança.'
+            },
+            { 
+                words: ['medo', 'kian', 'infinito', 'enigma', 'desconhecido', 'degolificada', 'membrana', 'calamidade', 'inexistente', 'paranormal'], 
+                class: 'element-medo',
+                title: 'O MEDO (ELEMENTO DE ELEMENTOS)',
+                desc: 'O Infinito. A cola que une a Realidade e o Outro Lado. O enigma impossível de ser compreendido. Tudo o que é Paranormal nasce do Medo do desconhecido.'
             }
-
-            root.style.setProperty('--term-green', color);
-            root.style.setProperty('--term-dim', dimColor);
-
-            if (logoDiv) {
-                if (isGlitchy) logoDiv.classList.add('glitch-active');
-                else logoDiv.classList.remove('glitch-active');
-            }
-        }
-
-        // =================================================================
-        // BOOT SEQUENCE (COM LÓGICA DA MEMBRANA)
-        // =================================================================
-        const bootTextDiv = document.getElementById('boot-text');
-        const mainInterface = document.getElementById('main-interface');
-        const bootScreen = document.getElementById('boot-screen');
-        const initOverlay = document.getElementById('init-overlay');
-
-        // Estado inicial da membrana (calculado no load)
-        const initialMembraneState = calculateMembrane();
-
-        // Gera as linhas de boot dinamicamente
-        const bootLines = [
-            "INICIANDO SISTEMA...",
-            "CARREGANDO KERNEL...",
-            "ACESSANDO SENSORES DE REALIDADE...",
-            `VERIFICANDO MEMBRANA... ${initialMembraneState.status}.`, // <--- AQUI A MÁGICA
-            "DETECTANDO SINAIS DE RITUAIS...",
-            "CONECTANDO AO SERVIDOR C.R.I.S...",
-            "> USUÁRIO: AGENTE_EXTERNO",
-            "> SENHA: ***********",
-            "ACESSO AUTORIZADO.",
-            "BEM-VINDO À ORDEM."
         ];
 
-        initOverlay.addEventListener('click', () => {
-            initOverlay.style.display = 'none';
-            bootScreen.style.display = 'flex';
-            startupAudio.play().catch(e => console.log("Erro áudio:", e));
-            runBoot(); 
-        });
-
-        function runBoot() {
-            let lineIndex = 0;
-            let charIndex = 0;
-            
-            function typeLine() {
-                if (lineIndex < bootLines.length) {
-                    const currentLine = bootLines[lineIndex];
-                    if (charIndex < currentLine.length) {
-                        bootTextDiv.textContent += currentLine.charAt(charIndex);
-                        charIndex++;
-                        setTimeout(typeLine, 25);
-                    } else {
-                        bootTextDiv.textContent += "\n";
-                        lineIndex++;
-                        charIndex = 0;
-                        setTimeout(typeLine, 400);
-                    }
-                } else {
-                    // FIM DO BOOT
-                    setTimeout(() => {
-                        bootScreen.style.opacity = 0;
-                        bootScreen.style.transition = "opacity 1s";
-                        stopStartupSound(); 
-
-                        // APLICA O ESTADO DA MEMBRANA NO SISTEMA
-                        if (initialMembraneState.status !== "ESTÁVEL") {
-                            document.documentElement.style.setProperty('--term-green', initialMembraneState.cor);
-                            if(initialMembraneState.danger) {
-                                document.body.classList.add('shake-active');
-                                const logo = document.querySelector('.cris-logo');
-                                if(logo) logo.classList.add('glitch-active');
-                                setTimeout(() => document.body.classList.remove('shake-active'), 1000);
-                            }
-                        }
-
-                        setTimeout(() => {
-                            bootScreen.style.display = "none";
-                            mainInterface.style.display = "flex";
-                            if(window.innerWidth > 800) document.getElementById('user-input').focus();
-                        }, 1000);
-                    }, 500);
-                }
+        function highlightKeywords(text) {
+            const tLower = text.toLowerCase();
+            const logoDiv = document.querySelector('.cris-logo');
+            let triggerGlitch = false;
+            if (tLower.includes('kian') || tLower.includes('medo') || tLower.includes('desconhecido')) triggerGlitch = true;
+            if (logoDiv) {
+                if(triggerGlitch) logoDiv.classList.add('glitch-active');
+                else logoDiv.classList.remove('glitch-active');
             }
-            typeLine();
+
+            let formattedText = text;
+            loreDatabase.forEach(group => {
+                group.words.forEach(word => {
+                    // Regex ajustada: \b para inicio de palavra, [a-zA-ZÀ-ÿ]* para sufixos
+                    const regex = new RegExp(`(<[^>]*>)|(\\b${word}[a-zA-ZÀ-ÿ]*)`, 'gi');
+                    formattedText = formattedText.replace(regex, (match, tag, capturedWord) => {
+                        if (tag) return tag;
+                        if (capturedWord) return `<span class="${group.class} has-tooltip" data-title="${group.title}" data-desc="${group.desc}">${capturedWord}</span>`;
+                        return match;
+                    });
+                });
+            });
+            return formattedText;
         }
 
-        // --- RELÓGIO ---
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString('pt-BR');
-        }, 1000);
+        // TOOLTIP EVENTS
+        const tooltipEl = document.createElement('div');
+        tooltipEl.id = 'lore-tooltip';
+        tooltipEl.className = 'tooltip-box';
+        document.body.appendChild(tooltipEl);
+
+        document.addEventListener('mouseover', function(e) {
+            if (e.target.classList.contains('has-tooltip')) {
+                const title = e.target.getAttribute('data-title');
+                const desc = e.target.getAttribute('data-desc');
+                tooltipEl.innerHTML = `<div class="tooltip-title">${title}</div><div>${desc}</div>`;
+                tooltipEl.style.display = 'block';
+                const color = window.getComputedStyle(e.target).color;
+                tooltipEl.style.borderColor = color;
+                tooltipEl.style.boxShadow = `0 0 10px ${color}`;
+            }
+        });
+        document.addEventListener('mouseout', function(e) {
+            if (e.target.classList.contains('has-tooltip')) tooltipEl.style.display = 'none';
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (tooltipEl.style.display === 'block') {
+                let x = e.clientX + 15;
+                let y = e.clientY + 15;
+                if (x + 260 > window.innerWidth) x = e.clientX - 265; 
+                if (y + 100 > window.innerHeight) y = e.clientY - 100; 
+                tooltipEl.style.left = x + 'px';
+                tooltipEl.style.top = y + 'px';
+            }
+        });
+
+        // =================================================================
+        // SPINNER CLI (LOADING)
+        // =================================================================
+        function showCliSpinner() {
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.style.opacity = '0.7'; 
+            
+            const spinner = document.createElement('span');
+            spinner.style.fontWeight = 'bold';
+            spinner.style.color = 'var(--term-green)';
+            
+            const text = document.createElement('span');
+            text.innerText = " PROCESSANDO DADOS...";
+            
+            div.appendChild(spinner);
+            div.appendChild(text);
+            EL.msgs.appendChild(div);
+            EL.msgs.scrollTop = EL.msgs.scrollHeight;
+
+            const frames = ['|', '/', '-', '\\'];
+            let i = 0;
+            const intervalId = setInterval(() => {
+                spinner.innerText = `[ ${frames[i]} ]`; 
+                i = (i + 1) % frames.length;
+            }, 100); 
+
+            return function stopSpinner() {
+                clearInterval(intervalId);
+                if (div.parentNode) div.remove();
+            };
+        }
 
         // =================================================================
         // CHAT ENGINE
         // =================================================================
-        const EL = {
-            input: document.getElementById('user-input'),
-            btn: document.getElementById('send-btn'),
-            msgs: document.getElementById('messages'),
-            histList: document.getElementById('history-list-dom')
-        };
-
         let storageData = JSON.parse(localStorage.getItem('cris_db_v1')) || { currentId: Date.now(), sessions: {} };
         let currentSession = [];
         let charQueue = [];
@@ -540,7 +710,12 @@
                 if (parseInt(id) === storageData.currentId) div.classList.add('active');
                 
                 div.innerHTML = `<span>${title}</span> <span class="delete-btn" onclick="deleteSession(event, ${id})">X</span>`;
-                div.onclick = (e) => { if(!e.target.classList.contains('delete-btn')) switchToSession(parseInt(id)); };
+                div.onclick = (e) => { 
+                    if(!e.target.classList.contains('delete-btn')) {
+                        switchToSession(parseInt(id));
+                        if(window.innerWidth <= 800) toggleSidebar();
+                    }
+                };
                 EL.histList.appendChild(div);
             });
         }
@@ -549,14 +724,9 @@
             const newId = Date.now();
             storageData.currentId = newId;
             storageData.sessions[newId] = [{ sender: 'bot', text: 'C.R.I.S online. Envie sua solicitação.' }];
-            
-            // Reseta cor para o estado atual da membrana (não necessariamente verde)
-            // Se a membrana estiver ruim lá fora, o sistema inicia "contaminado"
-            const mem = calculateMembrane();
-            document.documentElement.style.setProperty('--term-green', mem.cor); 
-
             saveStorage();
             switchToSession(newId);
+            if(window.innerWidth <= 800) toggleSidebar();
         }
 
         function switchToSession(id) {
@@ -577,9 +747,10 @@
         }
 
         function formatText(text) {
-            return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                       .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                       .replace(/\n/g, '<br>');
+            let processed = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                                .replace(/\n/g, '<br>');
+            return highlightKeywords(processed);
         }
 
         function renderMsgHTML(text, sender) {
@@ -598,7 +769,6 @@
             if (charQueue.length > 0) {
                 isProcessingQueue = true;
                 fullTextObj.val += charQueue.shift();
-                checkContextAndChangeColor(fullTextObj.val); 
                 targetSpan.innerHTML = formatText(fullTextObj.val);
                 EL.msgs.scrollTop = EL.msgs.scrollHeight;
                 setTimeout(() => processQueue(targetSpan, fullTextObj, typerId), 15);
@@ -620,32 +790,23 @@
                 EL.input.focus();
                 EL.btn.innerText = "ENVIAR";
             } else {
-                EL.btn.innerText = "PROCESSANDO...";
+                EL.btn.innerText = "...";
             }
         }
 
         async function handleSend() {
             const text = EL.input.value.trim();
             if (!text) return;
-
-            // --- COMANDOS E SEGREDOS ---
             const lowerText = text.toLowerCase();
 
+            // --- COMANDOS ESPECIAIS ---
             if (lowerText === '/clear') {
-                EL.msgs.innerHTML = '';
-                currentSession = [];
-                EL.input.value = '';
-                // Reseta para cor da membrana atual
-                const mem = calculateMembrane();
-                document.documentElement.style.setProperty('--term-green', mem.cor);
-                return;
+                EL.msgs.innerHTML = ''; currentSession = []; EL.input.value = ''; return;
             }
 
             if (lowerText === '/ritual') {
-                // Arte ASCII com barras invertidas escapadas (\\)
-                const ritualArt = `
-                                                                                                                                                  
-                                                                  ██                                                                              
+                const ritualArt = `                                                                                  
+                                                                 ██                                                                              
                                                                   ███                                                                             
                                                                    ███   ███                                                                      
                                                                     ███████                                                                       
@@ -722,37 +883,32 @@
                                              ███████     █  ████   ███████ ███  █  █       ██████████                                             
                                                 █████████████        ████           █████████████                                                 
                                                      ██████████████████████████████████████ █                                                     
-                                                              ███████████████████████                                                             
+                                                              ███████████████████████
                 `;
                 const div = document.createElement('div');
                 div.className = 'message bot';
-                // Coloca a arte dentro do container e adiciona a mensagem embaixo
-                div.innerHTML = `<div class="ascii-art">${ritualArt}</div><span>DETECTADO SINAL DE O.P. EM ALTA FREQUÊNCIA.</span>`;
+                div.innerHTML = `<div style="color: #bd00ff"><div class="ascii-art">${ritualArt}</div><span>DETECTADO SINAL DE O.P. EM ALTA FREQUÊNCIA.</span></div>`;
                 EL.msgs.appendChild(div);
                 EL.msgs.scrollTop = EL.msgs.scrollHeight;
-                document.documentElement.style.setProperty('--term-green', '#bd00ff');
                 EL.input.value = '';
                 return;
             }
 
             if (lowerText === '/membrana') {
-                // Usa a mesma função do boot!
                 const estado = calculateMembrane();
-                
-                renderMsgHTML(`ANÁLISE ESTRUTURAL DA REALIDADE:<br>HORÁRIO LOCAL: ${new Date().toLocaleTimeString()}<br>STATUS: [ ${estado.status} ]<br>OBS: ${estado.log}<br>DIAGNÓSTICO: ${estado.msg}`, 'bot');
-                
-                document.documentElement.style.setProperty('--term-green', estado.cor);
-                
-                if(estado.status === "ROMPIDA") {
-                    document.body.classList.add('shake-active');
-                    const logo = document.querySelector('.cris-logo');
-                    if(logo) logo.classList.add('glitch-active');
-                    setTimeout(() => {
-                        document.body.classList.remove('shake-active');
-                        // Glitch do logo mantemos se for rompida? Melhor tirar pra não cansar a vista
-                        if(logo) logo.classList.remove('glitch-active');
-                    }, 2000);
-                }
+                const msg = `ANÁLISE ESTRUTURAL DA REALIDADE:<br>HORÁRIO LOCAL: ${new Date().toLocaleTimeString()}<br>STATUS: [ ${estado.status} ]<br>OBS: ${estado.log}<br>DIAGNÓSTICO: ${estado.msg}`;
+                const div = document.createElement('div');
+                div.className = 'message bot';
+                div.innerHTML = `<div style="color: ${estado.cor}; text-shadow: 0 0 5px ${estado.cor}">${formatText(msg)}</div>`;
+                EL.msgs.appendChild(div);
+                EL.msgs.scrollTop = EL.msgs.scrollHeight;
+                EL.input.value = '';
+                return;
+            }
+
+            if (text.toLowerCase() === '/d20') {
+                const roll = Math.floor(Math.random() * 20) + 1;
+                renderMsgHTML(`🎲 DADO D20: [ ${roll} ]`, 'bot');
                 EL.input.value = '';
                 return;
             }
@@ -765,65 +921,65 @@
                 if (nex > 80) { classe = "AGENTE DE ELITE"; cor = "#ff0000"; }
                 if (nex === 99) { classe = "CALAMIDADE"; cor = "#ffffff"; }
 
-                renderMsgHTML(`CALCULANDO EXPOSIÇÃO PARANORMAL...<br>NEX ATUAL: [ ${nex}% ]<br>CLASSIFICAÇÃO: ${classe}`, 'bot');
-                document.documentElement.style.setProperty('--term-green', cor);
+                const div = document.createElement('div');
+                div.className = 'message bot';
+                div.innerHTML = `<div style="color: ${cor}">CALCULANDO EXPOSIÇÃO PARANORMAL...<br>NEX ATUAL: [ ${nex}% ]<br>CLASSIFICAÇÃO: ${classe}</div>`;
+                EL.msgs.appendChild(div);
+                EL.msgs.scrollTop = EL.msgs.scrollHeight;
                 EL.input.value = '';
                 return;
             }
             
             if (lowerText === '/credits' || lowerText === '/creditos') {
                 const creditsContent = `
-<div style="border: 1px dashed var(--term-dim); padding: 15px; background: rgba(0, 20, 0, 0.5);">
-    <div style="text-align: center; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;">/// CRÉDITOS DO SISTEMA ///</div>
-    <br>
-    <strong>OPERADOR/DEV:</strong> Agente Ricardo de Castro
-    <br>
-    <strong>VERSÃO:</strong> C.R.I.S. v2.0.4
-    <br>
-    <strong>BASE DE DADOS:</strong> Ordem Paranormal Wiki
-    <br>
-    <strong>MOTOR NEURAL:</strong> DeepSeek-V3 via SiliconFlow
-    <br>
-    <strong>INSPIRAÇÃO:</strong> Universo de Ordem Paranormal (Cellbit)
-    <br><br>
-    <div style="font-style: italic; opacity: 0.8; text-align: center;">
-        "O paranormal não vem para a nossa realidade de maneira fácil."
-    </div>
-    <br>
-    <div style="text-align: center;">--- FIM DO ARQUIVO ---</div>
-</div>`;
+                <div style="border: 1px dashed #00ffff; padding: 15px; background: rgba(0, 20, 20, 0.5); color: #00ffff; text-shadow: 0 0 5px #00ffff;">
+                    <div style="text-align: center; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;">/// CRÉDITOS DO SISTEMA ///</div>
+                    <br>
+                    <strong>OPERADOR/DEV:</strong> Agente Ricardo de Castro
+                    <br>
+                    <strong>VERSÃO:</strong> C.R.I.S. v2.0.4
+                    <br>
+                    <strong>BASE DE DADOS:</strong> Ordem Paranormal Wiki
+                    <br>
+                    <strong>MOTOR NEURAL:</strong> DeepSeek-V3 via SiliconFlow
+                    <br>
+                    <strong>INSPIRAÇÃO:</strong> Universo de Ordem Paranormal (Cellbit)
+                    <br><br>
+                    <div style="font-style: italic; opacity: 0.8; text-align: center;">
+                        "O paranormal não vem para a nossa realidade de maneira fácil."
+                    </div>
+                    <br>
+                    <div style="text-align: center;">--- FIM DO ARQUIVO ---</div>
+                </div>`;
                 const div = document.createElement('div');
                 div.className = 'message bot';
                 div.innerHTML = `<span>${creditsContent}</span>`;
                 EL.msgs.appendChild(div);
                 EL.msgs.scrollTop = EL.msgs.scrollHeight;
-                document.documentElement.style.setProperty('--term-green', '#00ffff');
-                document.documentElement.style.setProperty('--term-dim', '#008f8f');
                 EL.input.value = '';
                 return;
             }
 
+            // --- LÓGICA DE SHUTDOWN (MODIFICADA) ---
             if (lowerText === '/shutdown' || lowerText === '/exit') {
                 renderMsgHTML("ENCERRANDO SESSÃO...", 'bot');
                 renderMsgHTML("DESCONECTANDO DA MEMBRANA...", 'bot');
                 setTimeout(() => {
                     if(typeof startupAudio !== 'undefined') startupAudio.pause();
-                    const amb = document.getElementById('ambience-sound');
-                    if(amb) amb.pause();
                     document.body.classList.add('shutdown-mode');
+                    
+                    sysConfig.status = 'shutdown';
+                    saveSysConfig();
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
                 }, 1500);
                 EL.input.value = '';
                 return;
             }
 
-            if (lowerText === '/kian') {
-                renderMsgHTML("ACESSO NEGADO. A ENTIDADE SOLICITADA NÃO EXISTE NOS REGISTROS ACESSÍVEIS.", 'bot');
-                document.documentElement.style.setProperty('--term-green', '#ffffff');
-                EL.input.value = '';
-                return;
-            }
-            // -------------------------
-
+            // --- MENSAGEM PADRÃO ---
             renderMsgHTML(text, 'user');
             currentSession.push({ sender: 'user', text });
             saveStorage();
@@ -832,12 +988,14 @@
             EL.input.value = '';
             toggleInput(false);
 
-            const botSpan = renderMsgHTML("...", 'bot'); 
+            const stopSpinner = showCliSpinner();
+
             activeTyperId++;
             const currentId = activeTyperId;
             charQueue = [];
             const fullTextObj = { val: "" };
             let firstChunk = true;
+            let botSpan = null;
 
             try {
                 const response = await fetch(API_URL, {
@@ -846,8 +1004,7 @@
                     body: JSON.stringify({ message: text })
                 });
 
-                if (!response.ok) throw new Error("Erro de conexão com a Membrana.");
-
+                if (!response.ok) throw new Error("Falha na conexão.");
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder("utf-8");
 
@@ -857,14 +1014,18 @@
                     
                     const chunk = decoder.decode(value, { stream: true });
                     
-                    if (firstChunk) { botSpan.innerHTML = ""; firstChunk = false; }
+                    if (firstChunk) { 
+                        stopSpinner(); // Remove spinner quando começa a responder
+                        botSpan = renderMsgHTML("", 'bot'); 
+                        firstChunk = false; 
+                    }
 
                     for (const char of chunk) charQueue.push(char);
-                    
                     if (!isProcessingQueue) processQueue(botSpan, fullTextObj, currentId);
                 }
             } catch (err) {
-                botSpan.innerHTML = "<span style='color:red'>[ERRO CRÍTICO]: SERVIDOR INACESSÍVEL.</span>";
+                stopSpinner();
+                renderMsgHTML("<span style='color:var(--sangue)'>[ERRO CRÍTICO]: SERVIDOR INACESSÍVEL.</span>", 'bot');
                 toggleInput(true);
             }
         }
@@ -872,33 +1033,13 @@
         EL.btn.onclick = handleSend;
         EL.input.onkeypress = (e) => { if(e.key === 'Enter') handleSend(); };
         
-        if (!storageData.sessions[storageData.currentId]) startNewSession();
-        else switchToSession(storageData.currentId);
-
-        // Favicon Preto
-        function setBlackFavicon() {
-            const img = new Image();
-            img.src = 'Logo_Ordo_Realitas.webp'; 
-            img.crossOrigin = "Anonymous";
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                ctx.globalCompositeOperation = 'source-in';
-                ctx.fillStyle = '#000000'; // Ícone Preto
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                const link = document.getElementById('favicon') || document.createElement('link');
-                link.id = 'favicon'; link.rel = 'icon'; link.href = canvas.toDataURL();
-                document.head.appendChild(link);
-            };
+        // CORREÇÃO FINAL: Se não existir sessão atual, cria uma. Se existir, apenas carrega dados.
+        // O switchToSession visual já foi chamado no window.onload se estiver active.
+        if (!storageData.sessions[storageData.currentId]) {
+            startNewSession();
+        } else {
+            currentSession = storageData.sessions[storageData.currentId];
         }
-
-        window.onload = () => {
-            // Boot manual via click (já configurado no evento do overlay)
-            setBlackFavicon();
-        };
 
     </script>
 </body>
